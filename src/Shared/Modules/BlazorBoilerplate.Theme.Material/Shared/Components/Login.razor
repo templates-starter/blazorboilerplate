@@ -1,0 +1,31 @@
+﻿@using Microsoft.AspNetCore.Components
+@inject NavigationManager navigationManager
+@inject AuthenticationStateProvider authStateProvider
+@inject AppState appState
+@inject IStringLocalizer<Strings> L
+
+<AuthorizeView Context="AuthorizeContext">
+    <Authorized>
+        <MatTooltip Tooltip="@L["Logout"]">
+            <MatIconButton Icon="exit_to_app" RefBack="@context" OnClick="LogoutClick"></MatIconButton>
+        </MatTooltip>
+    </Authorized>
+    <NotAuthorized>
+        <MatTooltip Tooltip="@L["Login"]">
+            <MatIconButton Icon="account_box" RefBack="@context" Link="@BlazorBoilerplate.Shared.Settings.LoginPath"></MatIconButton>
+        </MatTooltip>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    async Task LogoutClick()
+    {
+        appState.UserProfile = null;
+        await ((IdentityAuthenticationStateProvider)authStateProvider).Logout();
+//-:cnd:noEmit
+#if ClientSideBlazor
+        navigationManager.NavigateTo(BlazorBoilerplate.Shared.Settings.LoginPath);
+#endif
+//-:cnd:noEmit
+    }
+}

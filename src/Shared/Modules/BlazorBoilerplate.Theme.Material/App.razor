@@ -1,0 +1,57 @@
+﻿<Router AppAssembly="typeof(App).Assembly" AdditionalAssemblies="ModuleProvider.AssembliesWithPages">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
+    </Found>
+    <NotFound>
+        <CascadingAuthenticationState>
+            <LayoutView Layout="typeof(MainLayout)">
+                <LoadingBackground ShowLogoBox="true">
+                    <div class="login-body">
+                        <h1>Page not found</h1>
+                        <label>Please check the URL or</label><br />
+                        <MatButton Link="/" Raised="true">Return Home</MatButton>
+                    </div>
+                </LoadingBackground>
+            </LayoutView>
+        </CascadingAuthenticationState>
+    </NotFound>
+</Router>
+<MatToastContainer />
+
+@code
+{
+    [Inject] HttpClient _httpClient { get; set; }
+    [Inject] NavigationManager _navigationManager { get; set; }
+//-:cnd:noEmit
+#if ServerSideBlazor
+    [Inject] IHttpContextAccessor _http { get; set; }
+#endif
+//-:cnd:noEmit
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _httpClient.BaseAddress = new Uri(_navigationManager.BaseUri);
+//-:cnd:noEmit
+#if ServerSideBlazor
+        // likely user refreshed page, we need to grab the cookies if they exist and pass it to the HttpClient for this request
+        if (_http?.HttpContext?.Request.Cookies.Any() == true)
+        {
+            var cks = new List<string>();
+
+            foreach (var cookie in _http.HttpContext.Request.Cookies)
+            {
+                cks.Add($"{cookie.Key}={cookie.Value}");
+            }
+
+            _httpClient.DefaultRequestHeaders.Add("Cookie", String.Join(';', cks));
+        }
+#endif
+//-:cnd:noEmit
+    }
+}
